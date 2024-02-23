@@ -1,3 +1,7 @@
+<p align="center">
+    <a href="https://github.com/wmui/essay"><img src="https://img.shields.io/badge/node-%3E%3D20.11.0-orange.svg" alt="Version"></a>
+    <a href="https://github.com/wmui/essay"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
 # PictureConverterとは
 ![image](https://github.com/pkki/PictureConverter/assets/80244807/e0476fea-518a-403a-a181-a78bd658ad15)
 
