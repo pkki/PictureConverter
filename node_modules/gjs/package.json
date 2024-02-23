@@ -1,0 +1,17 @@
+{
+  "name": "gjs",
+  "version": "0.1.0",
+  "description": "Let you call a function over a range of numbers.",
+  "main": "g.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bfontaine/g.js.git"
+  },
+  "keywords": [
+    "generator", "iterator"
+  ],
+  "author": "Baptiste Fontaine",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "homepage": "https://github.com/bfontaine/g.js"
+}
