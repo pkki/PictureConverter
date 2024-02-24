@@ -12,11 +12,19 @@
     <header>
         <p>画像変換君 ver1</p>
     </header>
+    <div id="loading">
+        <div class="loading">
+            <div>
+                <span class="loader"></span>
+                <p>変換中...</p>
+            </div>
+        </div>
+    </div>
     <article>
         <div class="main">
             <p>画像変換webアプリケーションです。7種類の拡張子をサポート!!是非使ってみてください。※画像はサーバーに一時的に保存されます。</p>
             <div class="form">
-                <input type="file" name="file" id="file">
+                <input type="file" name="file" id="file" accept="image/png, image/jpeg, image/webp, image/gif, image/avif, image/tiff, image/svg+xml,image/vnd.microsoft.icon">
                 <select name="kakutyousi" id="kakutyousi">
                     <option value="">--変換したい拡張子を選択してください--</option>
                     <option value="png">image/png</option>
@@ -26,6 +34,7 @@
                     <option value="avif">image/avif</option>
                     <option value="tiff">image/tiff</option>
                     <option value="svg">image/svg+xml</option>
+                    <option value="ico">image/vnd.microsoft.icon</option>
                 </select>
                 <div id="100" class="quality" style="display: none;">
                     <p>クオリティ</p>
@@ -86,20 +95,20 @@
     document.getElementById("ok").addEventListener("change", oks, false);
     document.getElementById("hiok").addEventListener("change", his, false);
     document.getElementById("file").addEventListener("change", change, false);
-    document.getElementById("imgwidth").addEventListener("change",wichan,false);
-    document.getElementById("imgheight").addEventListener("change",hechan,false);
-    function wichan(){
+    document.getElementById("imgwidth").addEventListener("change", wichan, false);
+    document.getElementById("imgheight").addEventListener("change", hechan, false);
+    function wichan() {
         if (document.getElementById("hiok").checked) {
-            document.getElementById("imgheight").value= (hhi*Number(document.getElementById("imgwidth").value))/whi;
-        }else{
-            
+            document.getElementById("imgheight").value = (hhi * Number(document.getElementById("imgwidth").value)) / whi;
+        } else {
+
         }
     }
-    function hechan(){
+    function hechan() {
         if (document.getElementById("hiok").checked) {
-            document.getElementById("imgwidth").value= (Number(document.getElementById("imgwidth").value*whi)/hhi);
-        }else{
-            
+            document.getElementById("imgwidth").value = (Number(document.getElementById("imgheight").value * whi) / hhi);
+        } else {
+
         }
     }
     function oks() {
@@ -113,13 +122,13 @@
             document.getElementById("hiok").disabled = false;
         }
     }
-    function remove(){
-        document.getElementById("imgheight").value=hhi;
-        document.getElementById("imgwidth").value=whi;
+    function remove() {
+        document.getElementById("imgheight").value = hhi;
+        document.getElementById("imgwidth").value = whi;
     }
     function his() {
         if (document.getElementById("hiok").checked) {
-            document.getElementById("removes").style.display="block";
+            document.getElementById("removes").style.display = "block";
             whi = Number(document.getElementById("imgwidth").value);
             hhi = Number(document.getElementById("imgheight").value);
             if (Number(document.getElementById("imgwidth").value) >= Number(document.getElementById("imgheight").value)) {
@@ -127,10 +136,10 @@
             } else {
                 document.getElementById("imgheight").disabled = true;
             }
-        }else{
+        } else {
             document.getElementById("imgwidth").disabled = false;
             document.getElementById("imgheight").disabled = false;
-            document.getElementById("removes").style.display="none";
+            document.getElementById("removes").style.display = "none";
         }
     }
     function change(event) {
@@ -164,22 +173,35 @@
         } else if (document.getElementById("kakutyousi").value == "png") {
             formData.append('quality', document.getElementById("1to10").value);
         } else {
-            formData.append('quality', "-1");
+            formData.append('quality', "0");
         }
-
-        formData.append("file", document.getElementById("file").files[0])
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/post.html', true);
-        xhr.addEventListener('load', function (response) {
-            if (xhr.status === 200) {
-                document.getElementById("imgafter").src = xhr.responseText;
-                document.getElementById("dl").style.display = "block";
-                alert("変換完了");
+        if (document.getElementById("kakutyousi").value != "") {
+            if (document.getElementById("file").files.length > 0) {
+                if (document.getElementById("file").files[0].size <= 15728640) {
+                    document.getElementById("loading").style.display = "flex";
+                    formData.append("file", document.getElementById("file").files[0])
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/post.html', true);
+                    xhr.addEventListener('load', function (response) {
+                        if (xhr.status === 200) {
+                            document.getElementById("imgafter").src = xhr.responseText;
+                            document.getElementById("dl").style.display = "block";
+                            document.getElementById("loading").style.display = "none";
+                        } else {
+                            alert("エラー:コード" + xhr.status);
+                            document.getElementById("loading").style.display = "none";
+                        }
+                    });
+                    xhr.send(formData);
+                } else {
+                    alert("画像ファイルは15MB以下にしてください。");
+                }
             } else {
-                alert("エラー:コード" + xhr.status);
+                alert("画像ファイルがありません。");
             }
-        });
-        xhr.send(formData);
+        } else {
+            alert("拡張子が選択されていません。");
+        }
     }
     function dl() {
         const imageUrl = document.getElementById("imgafter").src;

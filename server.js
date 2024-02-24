@@ -3,6 +3,8 @@ fs = require('fs');
 ejs = require('ejs');
 multer = require('multer')
 sharp = require("sharp");
+gm = require('gm');
+fileType = require('file-type')
 var bodyParser = require('body-parser');
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -17,10 +19,10 @@ const post_page = fs.readFileSync("./views/post.ejs", "utf-8")
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 15 * 1024 * 1024, // 最大ファイルサイズは15MB
+        fileSize: 15 * 1024 * 1024, // 最大ファイルサイズは15MB
     },
-    
-  });
+
+});
 app.use(express.static('public'));
 
 app.get('/', function (request, response) {
@@ -39,6 +41,32 @@ const storage = multer.diskStorage({
         cb(null, file.fieldname + '-' + Date.now())
     }
 })
+function convertImage(inputBuffer) {
+    return new Promise((resolve, reject) => {
+        gm(inputBuffer)
+            .noProfile()
+            .toBuffer('PNG', function (err, buffer) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(buffer);
+            });
+    });
+}
+function convertImage2(inputBuffer, type) {
+    return new Promise((resolve, reject) => {
+        gm(inputBuffer)
+            .noProfile()
+            .toBuffer(type, function (err, buffer) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(buffer);
+            });
+    });
+}
 app.post('/post.html', upload.single('file'), async function (request, response) { // asyncを追加
     console.log(request.body);
     if (!request.file) {
@@ -52,45 +80,70 @@ app.post('/post.html', upload.single('file'), async function (request, response)
         "png": "png",
         "webp": "webp",
         "gif": "gif",
+        "ico": "ico"
     };
 
-    async function convertAndSendFile(extension, quality,width,height,resize) {
+    async function convertAndSendFile(extension, quality, width, height, resize) {
         const mimeType = mimeTypes[extension];
         let outputBuffer;
-        if(resize == "true"){
+        let output2Buffer;
+        if (resize == "true") {
 
-        }else{
-            width=null;
-            height=null;
+        } else {
+            width = null;
+            height = null;
+        }
+        const result = await fileType.fromBuffer(request.file.buffer);
+        if (result.ext === 'ico') {
+            await gm(request.file.buffer)
+                .noProfile()
+                .toBuffer('PNG', function (err, buffer) {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    output2Buffer=buffer;
+                });
+        } else {
+            output2Buffer = request.file.buffer;
         }
         if (extension == "jpg") {
             if (quality <= 100 && quality >= 1) {
-                outputBuffer = await sharp(request.file.buffer).jpeg({
+                outputBuffer = await sharp(output2Buffer).jpeg({
                     quality: quality,
                     progressive: true
                 }).resize(width, height).toBuffer();
             }
         } else if (extension == "png") {
             if (quality <= 9 && quality >= 1) {
-                 outputBuffer = await sharp(request.file.buffer).png({
+                outputBuffer = await sharp(output2Buffer).png({
                     compressionLevel: quality,
                     progressive: true
                 }).resize(width, height).toBuffer();
             }
         } else if (extension == "webp") {
             if (quality <= 100 && quality >= 1) {
-                 outputBuffer =await sharp(request.file.buffer).webp({
+                outputBuffer = await sharp(output2Buffer).webp({
                     quality: quality
                 }).resize(width, height).toBuffer();
             }
         } else if (extension == "tiff") {
             if (quality <= 100 && quality >= 1) {
-                 outputBuffer =await sharp(request.file.buffer).tiff({
+                outputBuffer = await sharp(output2Buffer).tiff({
                     quality: quality
                 }).resize(width, height).toBuffer();
             }
+        } else if (extension == "ico") {
+            convertImage2(request.file.buffer, "ICON")
+                .then(buffer => {
+                    // ここでbufferを使用します。bufferは、変換後の画像データを含んでいます。
+                    outputBuffer = buffer;
+                })
+                .catch(err => {
+                    console.error(err);
+                });
         } else {
-            outputBuffer =await sharp(request.file.buffer).resize(width, height).toBuffer();
+            outputBuffer = await sharp(output2Buffer).resize(width, height).toBuffer();
         }
         let base64Image = outputBuffer.toString('base64');
         const pic = `data:image/${mimeType};base64,${base64Image}`;
@@ -103,7 +156,7 @@ app.post('/post.html', upload.single('file'), async function (request, response)
     }
 
     if (request.body["kakutyousi"] in mimeTypes) {
-        await convertAndSendFile(request.body["kakutyousi"], Number(request.body["quality"]),Number(request.body["width"]),Number(request.body["height"]),request.body["resize"]);
+        await convertAndSendFile(request.body["kakutyousi"], Number(request.body["quality"]), Number(request.body["width"]), Number(request.body["height"]), request.body["resize"]);
     }
 
 });
