@@ -95,15 +95,17 @@ app.post('/post.html', upload.single('file'), async function (request, response)
         }
         const result = await fileType.fromBuffer(request.file.buffer);
         if (result.ext === 'ico') {
-            await gm(request.file.buffer)
-                .noProfile()
-                .toBuffer('PNG', function (err, buffer) {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-                    output2Buffer=buffer;
-                });
+            output2Buffer = await new Promise((resolve, reject) => {
+                gm(request.file.buffer)
+                    .noProfile()
+                    .toBuffer('PNG', function (err, buffer) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(buffer);
+                        }
+                    });
+            });
         } else {
             output2Buffer = request.file.buffer;
         }
