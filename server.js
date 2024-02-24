@@ -54,37 +54,43 @@ app.post('/post.html', upload.single('file'), async function (request, response)
         "gif": "gif",
     };
 
-    async function convertAndSendFile(extension, quality) {
+    async function convertAndSendFile(extension, quality,width,height,resize) {
         const mimeType = mimeTypes[extension];
         let outputBuffer;
+        if(resize == "true"){
+
+        }else{
+            width=null;
+            height=null;
+        }
         if (extension == "jpg") {
             if (quality <= 100 && quality >= 1) {
                 outputBuffer = await sharp(request.file.buffer).jpeg({
                     quality: quality,
                     progressive: true
-                }).toBuffer();
+                }).resize(width, height).toBuffer();
             }
         } else if (extension == "png") {
             if (quality <= 9 && quality >= 1) {
                  outputBuffer = await sharp(request.file.buffer).png({
                     compressionLevel: quality,
                     progressive: true
-                }).toBuffer();
+                }).resize(width, height).toBuffer();
             }
         } else if (extension == "webp") {
             if (quality <= 100 && quality >= 1) {
                  outputBuffer =await sharp(request.file.buffer).webp({
                     quality: quality
-                }).toBuffer();
+                }).resize(width, height).toBuffer();
             }
         } else if (extension == "tiff") {
             if (quality <= 100 && quality >= 1) {
                  outputBuffer =await sharp(request.file.buffer).tiff({
                     quality: quality
-                }).toBuffer();
+                }).resize(width, height).toBuffer();
             }
         } else {
-            outputBuffer =await sharp(request.file.buffer).toBuffer();
+            outputBuffer =await sharp(request.file.buffer).resize(width, height).toBuffer();
         }
         let base64Image = outputBuffer.toString('base64');
         const pic = `data:image/${mimeType};base64,${base64Image}`;
@@ -97,7 +103,7 @@ app.post('/post.html', upload.single('file'), async function (request, response)
     }
 
     if (request.body["kakutyousi"] in mimeTypes) {
-        await convertAndSendFile(request.body["kakutyousi"], Number(request.body["quality"]));
+        await convertAndSendFile(request.body["kakutyousi"], Number(request.body["quality"]),Number(request.body["width"]),Number(request.body["height"]),request.body["resize"]);
     }
 
 });

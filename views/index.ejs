@@ -15,7 +15,7 @@
     <article>
         <div class="main">
             <p>画像変換webアプリケーションです。7種類の拡張子をサポート!!是非使ってみてください。※画像はサーバーに一時的に保存されます。</p>
-            <form action="/post.html" method="post" enctype="multipart/form-data">
+            <div class="form">
                 <input type="file" name="file" id="file">
                 <select name="kakutyousi" id="kakutyousi">
                     <option value="">--変換したい拡張子を選択してください--</option>
@@ -29,16 +29,37 @@
                 </select>
                 <div id="100" class="quality" style="display: none;">
                     <p>クオリティ</p>
-                    <input type="range" name="quality" id="1to100" max="100" min="1" value="100" onchange="handleInputChange()" oninput="handleInputChange()">
+                    <input type="range" name="quality" id="1to100" max="100" min="1" value="100"
+                        onchange="handleInputChange()" oninput="handleInputChange()">
                     <p id="100a">100</p>
                 </div>
                 <div id="10" class="quality" style="display: none;">
                     <p>圧縮レベル</p>
-                    <input type="range" name="pngquality" id="1to10" max="9" min="1" value="1" onchange="handleInputChange()" oninput="handleInputChange()">
+                    <input type="range" name="pngquality" id="1to10" max="9" min="1" value="1"
+                        onchange="handleInputChange()" oninput="handleInputChange()">
                     <p id="9a">1</p>
                 </div>
-                
-            </form>
+                <div class="resizes">
+                    <p>リサイズプロパティ</p>
+                    <div class="aresize">
+                        <p>リサイズする:</p>
+                        <input type="checkbox" name="" id="ok" value="true">
+                        <p>比を維持</p>
+                        <input type="checkbox" name="" id="hiok" value="true" disabled>
+                        <button onclick="remove()" style="display: none;" id="removes">戻す</button>
+                    </div>
+                    <div class="resize">
+                        <div class="aresize">
+                            <p>横</p>
+                            <input type="number" name="" id="imgwidth" disabled max="10000">
+                        </div>
+                        <div class="aresize">
+                            <p>縦</p>
+                            <input type="number" name="" id="imgheight" disabled max="10000">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <button onclick="post()" class="henkan">変換</button>
             <div class="imgbefore">
                 <div>
@@ -60,27 +81,92 @@
     </article>
 </body>
 <script>
-    document.getElementById("file").addEventListener("change", change, false)
+    var whi = 0;
+    var hhi = 0;
+    document.getElementById("ok").addEventListener("change", oks, false);
+    document.getElementById("hiok").addEventListener("change", his, false);
+    document.getElementById("file").addEventListener("change", change, false);
+    document.getElementById("imgwidth").addEventListener("change",wichan,false);
+    document.getElementById("imgheight").addEventListener("change",hechan,false);
+    function wichan(){
+        if (document.getElementById("hiok").checked) {
+            document.getElementById("imgheight").value= (hhi*Number(document.getElementById("imgwidth").value))/whi;
+        }else{
+            
+        }
+    }
+    function hechan(){
+        if (document.getElementById("hiok").checked) {
+            document.getElementById("imgwidth").value= (Number(document.getElementById("imgwidth").value*whi)/hhi);
+        }else{
+            
+        }
+    }
+    function oks() {
+        if (!document.getElementById("ok").checked) {
+            document.getElementById("imgwidth").disabled = true;
+            document.getElementById("imgheight").disabled = true;
+            document.getElementById("hiok").disabled = true;
+        } else {
+            document.getElementById("imgwidth").disabled = false;
+            document.getElementById("imgheight").disabled = false;
+            document.getElementById("hiok").disabled = false;
+        }
+    }
+    function remove(){
+        document.getElementById("imgheight").value=hhi;
+        document.getElementById("imgwidth").value=whi;
+    }
+    function his() {
+        if (document.getElementById("hiok").checked) {
+            document.getElementById("removes").style.display="block";
+            whi = Number(document.getElementById("imgwidth").value);
+            hhi = Number(document.getElementById("imgheight").value);
+            if (Number(document.getElementById("imgwidth").value) >= Number(document.getElementById("imgheight").value)) {
+                document.getElementById("imgwidth").disabled = true;
+            } else {
+                document.getElementById("imgheight").disabled = true;
+            }
+        }else{
+            document.getElementById("imgwidth").disabled = false;
+            document.getElementById("imgheight").disabled = false;
+            document.getElementById("removes").style.display="none";
+        }
+    }
     function change(event) {
         var file = event.target.files[0];
         var reader = new FileReader();
+        var element = new Image();
+
+        element.onload = function () {
+            var width = element.naturalWidth;
+            var height = element.naturalHeight;
+            document.getElementById("imgwidth").value = document.getElementById("imgbefore").naturalWidth;
+            document.getElementById("imgheight").value = document.getElementById("imgbefore").naturalHeight;
+        }
         reader.onloadend = function () {
             upfile = reader.result;
             document.getElementById("imgbefore").src = upfile;
+            element.src = reader.result;
+            his()
         }
+
         reader.readAsDataURL(file);
     }
     function post() {
         var formData = new FormData();
         formData.append('kakutyousi', document.getElementById("kakutyousi").value);
-        if(document.getElementById("kakutyousi").value == "jpg" || document.getElementById("kakutyousi").value == "webp" ||document.getElementById("kakutyousi").value == "tiff" ){
+        formData.append('width', Math.round(document.getElementById("imgwidth").value));
+        formData.append('height', Math.round(document.getElementById("imgheight").value));
+        formData.append("resize", document.getElementById("ok").checked);
+        if (["jpg", "webp", "tiff"].includes(document.getElementById("kakutyousi").value)) {
             formData.append('quality', document.getElementById("1to100").value);
-        }else if(document.getElementById("kakutyousi").value == "png"){
+        } else if (document.getElementById("kakutyousi").value == "png") {
             formData.append('quality', document.getElementById("1to10").value);
-        }else{
+        } else {
             formData.append('quality', "-1");
         }
-        
+
         formData.append("file", document.getElementById("file").files[0])
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/post.html', true);
@@ -102,28 +188,28 @@
         a.download = 'sample.jpg';
         a.click();
     }
-    document.getElementById("kakutyousi").addEventListener("change",quality,false)
-    function quality(){
-        if(document.getElementById("kakutyousi").value == "jpg" || document.getElementById("kakutyousi").value == "webp" ||document.getElementById("kakutyousi").value == "tiff" ){
+    document.getElementById("kakutyousi").addEventListener("change", quality, false)
+    function quality() {
+        if (["jpg", "webp", "tiff"].includes(document.getElementById("kakutyousi").value)) {
             document.getElementById("100").style.display = "flex";
             document.getElementById("10").style.display = "none";
-        }else if(document.getElementById("kakutyousi").value == "png"){
+        } else if (document.getElementById("kakutyousi").value == "png") {
             document.getElementById("100").style.display = "none";
             document.getElementById("10").style.display = "flex";
-        }else{
+        } else {
             document.getElementById("100").style.display = "none";
             document.getElementById("10").style.display = "none";
         }
     }
     function handleInputChange() {
-        if(document.getElementById("kakutyousi").value == "jpg" || document.getElementById("kakutyousi").value == "webp" ||document.getElementById("kakutyousi").value == "tiff" ){
+        if (["jpg", "webp", "tiff"].includes(document.getElementById("kakutyousi").value)) {
             document.getElementById("100a").innerHTML = document.getElementById("1to100").value;
-        }else if(document.getElementById("kakutyousi").value == "png"){
+        } else if (document.getElementById("kakutyousi").value == "png") {
             document.getElementById("9a").innerHTML = document.getElementById("1to10").value;
-        }else{
+        } else {
 
         }
-}
+    }
 </script>
 
 </html>
