@@ -8,6 +8,9 @@ header{
     align-items: center;
     background-color: rgb(231, 231, 231);
 }
+.resize input{
+    width: 40%;
+}
 .resizes{
     margin-top: 10px;
     padding: 10px;
