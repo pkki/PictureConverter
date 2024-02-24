@@ -3,7 +3,7 @@ fs = require('fs');
 ejs = require('ejs');
 multer = require('multer')
 sharp = require("sharp");
-gm = require('gm');
+favicon = require('favicon');
 fileType = require('file-type')
 var bodyParser = require('body-parser');
 var app = express();
@@ -80,7 +80,6 @@ app.post('/post.html', upload.single('file'), async function (request, response)
         "png": "png",
         "webp": "webp",
         "gif": "gif",
-        "ico": "ico"
     };
 
     async function convertAndSendFile(extension, quality, width, height, resize) {
@@ -96,15 +95,17 @@ app.post('/post.html', upload.single('file'), async function (request, response)
         const result = await fileType.fromBuffer(request.file.buffer);
         if (result.ext === 'ico') {
             output2Buffer = await new Promise((resolve, reject) => {
-                gm(request.file.buffer)
-                    .noProfile()
-                    .toBuffer('PNG', function (err, buffer) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(buffer);
-                        }
-                    });
+                favicon(request.file.buffer, (err, favicons) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        // faviconsは、ICOファイル内の各画像のPNGバージョンを含む配列です。
+                        // ここでは最初の画像をバッファとして取得します。
+                        const firstImage = favicons[0];
+                        const buffer = Buffer.from(firstImage.data, 'base64');
+                        resolve(buffer);
+                    }
+                });
             });
         } else {
             output2Buffer = request.file.buffer;
