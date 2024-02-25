@@ -9,9 +9,6 @@
 </head>
 
 <body>
-    <header>
-        <p>画像変換君 ver1</p>
-    </header>
     <div id="loading">
         <div class="loading">
             <div>
@@ -20,11 +17,16 @@
             </div>
         </div>
     </div>
+    <header>
+        <p>画像変換君 ver1</p>
+    </header>
+
     <article>
         <div class="main">
             <p>画像変換webアプリケーションです。7種類の拡張子をサポート!!是非使ってみてください。※画像はサーバーに一時的に保存されます。</p>
             <div class="form">
-                <input type="file" name="file" id="file" accept="image/png, image/jpeg, image/webp, image/gif, image/avif, image/tiff, image/svg+xml">
+                <input type="file" name="file" id="file"
+                    accept="image/png, image/jpeg, image/webp, image/gif, image/avif, image/tiff, image/svg+xml">
                 <select name="kakutyousi" id="kakutyousi">
                     <option value="">--変換したい拡張子を選択してください--</option>
                     <option value="png">image/png</option>
@@ -59,11 +61,34 @@
                     <div class="resize">
                         <div class="aresize">
                             <p>横</p>
-                            <input type="number" name="" id="imgwidth" disabled max="10000">
+                            <input type="number" name="" id="imgwidth" disabled max="5000">
                         </div>
                         <div class="aresize">
                             <p>縦</p>
-                            <input type="number" name="" id="imgheight" disabled max="10000">
+                            <input type="number" name="" id="imgheight" disabled max="5000">
+                        </div>
+                    </div>
+                </div>
+                <div class="resizes">
+                    <p>編集プロパティ</p>
+                    <div class="resize">
+                        <div class="aresize">
+                            <p>ぼかし</p>
+                            <input type="range" name="bokasi" id="bokasi" max="99" min="0" value="0" onchange="boka()"
+                                oninput="boka()">
+                            <p id="bokaI">0</p>
+                        </div>
+                        <div class="aresize">
+                            <p>回転</p>
+                            <input type="number" name="" id="rotate" max="360" value="0">
+                        </div>
+                        <div class="aresize">
+                            <p>縦反転</p>
+                            <input type="checkbox" name="" id="hanten">
+                        </div>
+                        <div class="aresize">
+                            <p>横反転</p>
+                            <input type="checkbox" name="" id="yokohanten">
                         </div>
                     </div>
                 </div>
@@ -121,6 +146,9 @@
             document.getElementById("hiok").disabled = false;
         }
     }
+    function boka() {
+        document.getElementById("bokaI").innerHTML = document.getElementById("bokasi").value;
+    }
     function remove() {
         document.getElementById("imgheight").value = hhi;
         document.getElementById("imgwidth").value = whi;
@@ -166,7 +194,12 @@
         formData.append('kakutyousi', document.getElementById("kakutyousi").value);
         formData.append('width', Math.round(document.getElementById("imgwidth").value));
         formData.append('height', Math.round(document.getElementById("imgheight").value));
+        formData.append('rotate', Math.round(document.getElementById("rotate").value));
+        formData.append('bokasi', Math.round(document.getElementById("bokasi").value));
         formData.append("resize", document.getElementById("ok").checked);
+        formData.append("hanten", document.getElementById("hanten").checked);
+        formData.append("yokohanten", document.getElementById("yokohanten").checked);
+
         if (["jpg", "webp", "tiff"].includes(document.getElementById("kakutyousi").value)) {
             formData.append('quality', document.getElementById("1to100").value);
         } else if (document.getElementById("kakutyousi").value == "png") {
@@ -174,32 +207,36 @@
         } else {
             formData.append('quality', "0");
         }
-        if (document.getElementById("kakutyousi").value != "") {
-            if (document.getElementById("file").files.length > 0) {
-                if (document.getElementById("file").files[0].size <= 15728640) {
-                    document.getElementById("loading").style.display = "flex";
-                    formData.append("file", document.getElementById("file").files[0])
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/post.html', true);
-                    xhr.addEventListener('load', function (response) {
-                        if (xhr.status === 200) {
-                            document.getElementById("imgafter").src = xhr.responseText;
-                            document.getElementById("dl").style.display = "block";
-                            document.getElementById("loading").style.display = "none";
-                        } else {
-                            alert("エラー:コード" + xhr.status);
-                            document.getElementById("loading").style.display = "none";
-                        }
-                    });
-                    xhr.send(formData);
+        if (Math.round(document.getElementById("imgwidth").value <= 5000 || Math.round(document.getElementById("imgheight").value <= 5000))) {
+            if (document.getElementById("kakutyousi").value != "") {
+                if (document.getElementById("file").files.length > 0) {
+                    if (document.getElementById("file").files[0].size <= 15728640) {
+                        document.getElementById("loading").style.display = "flex";
+                        formData.append("file", document.getElementById("file").files[0])
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/post.html', true);
+                        xhr.addEventListener('load', function (response) {
+                            if (xhr.status === 200) {
+                                document.getElementById("imgafter").src = xhr.responseText;
+                                document.getElementById("dl").style.display = "block";
+                                document.getElementById("loading").style.display = "none";
+                            } else {
+                                alert("エラー:コード" + xhr.status);
+                                document.getElementById("loading").style.display = "none";
+                            }
+                        });
+                        xhr.send(formData);
+                    } else {
+                        alert("画像ファイルは15MB以下にしてください。");
+                    }
                 } else {
-                    alert("画像ファイルは15MB以下にしてください。");
+                    alert("画像ファイルがありません。");
                 }
             } else {
-                alert("画像ファイルがありません。");
+                alert("拡張子が選択されていません。");
             }
-        } else {
-            alert("拡張子が選択されていません。");
+        }else{
+            alert("縦のサイズと横のサイズが5000pxを超えないようにしてください");
         }
     }
     function dl() {
